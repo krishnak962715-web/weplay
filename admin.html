@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WePlay 30K Charms Drop</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0c29; background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            color: white; display: flex; justify-content: center; align-items: center; height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2); text-align: center; width: 90%; max-width: 400px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+        }
+        h1 { color: #00e5ff; margin-bottom: 10px; text-transform: uppercase; font-size: 24px;}
+        p { color: #cccccc; margin-bottom: 25px; font-size: 14px;}
+        input {
+            width: 90%; padding: 12px; margin-bottom: 20px; border: none; border-radius: 8px;
+            background: rgba(0,0,0,0.5); color: #00e5ff; font-size: 16px; outline: none;
+            border: 1px solid #00e5ff; text-align: center;
+        }
+        input::placeholder { color: rgba(0, 229, 255, 0.5); }
+        button {
+            width: 100%; padding: 12px; background: linear-gradient(to right, #00c6ff, #0072ff);
+            border: none; border-radius: 8px; color: white; font-size: 18px; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+        }
+        button:hover { box-shadow: 0 0 15px #00c6ff; transform: scale(1.05); }
+        #formSection { display: none; } 
+        .closed-msg { color: #ff4b4b; font-weight: bold; display: block; font-size: 18px; margin-top: 10px; }
+        .success-msg { color: #00ff88; font-weight: bold; display: none; margin-top: 15px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎮 30K CHARMS DROP</h1>
+        <p>Apni WePlay ID jaldi submit karein!</p>
+        
+        <div id="formSection">
+            <input type="text" id="weplayId" placeholder="Enter Your WePlay ID" autocomplete="off">
+            <button onclick="submitId()">Submit ID</button>
+        </div>
+        
+        <div id="closedMsg" class="closed-msg">⛔ Form is Currently Closed!</div>
+        <div id="successMsg" class="success-msg">✅ ID Submitted Successfully!</div>
+    </div>
+
+    <script>
+        // Supabase Database Connection
+        const supabaseUrl = 'https://ioktunemobmqvtwxusqd.supabase.co';
+        const supabaseKey = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlva3R1bmVtb2JtcXZ0d3h1c3FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyOTY4MjIsImV4cCI6MjA5NTg3MjgyMn0.Wj64zcBwyhfNRpbjey9OKzH3p1fl1-Uq5xgtdANZ0_U';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentStatus = "OFF";
+
+        // Har 2 second mein database check karega ki Admin ne Form ON kiya ya OFF
+        setInterval(async () => {
+            try {
+                const { data, error } = await supabase.from('config').select('status').eq('id', 1).single();
+                if (data) {
+                    currentStatus = data.status;
+                    
+                    // Agar Success message nahi dikh raha hai, tabhi box ko hide/show karein
+                    if (document.getElementById("successMsg").style.display !== "block") {
+                        if (currentStatus === "ON") {
+                            document.getElementById("formSection").style.display = "block";
+                            document.getElementById("closedMsg").style.display = "none";
+                        } else {
+                            document.getElementById("formSection").style.display = "none";
+                            document.getElementById("closedMsg").style.display = "block";
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Database connection issue.");
+            }
+        }, 2000);
+
+        // ID Submit karne ka function
+        async function submitId() {
+            let idInput = document.getElementById("weplayId");
+            let id = idInput.value.trim();
+            
+            if(id === "") { 
+                alert("⚠️ Please enter your WePlay ID first!"); 
+                return; 
+            }
+            
+            // Database mein ID save karna
+            const { error } = await supabase.from('weplay_ids').insert([{ weplay_id: id }]);
+            
+            if(!error) {
+                // Success hone par Form chupao aur Success message dikhao
+                document.getElementById("formSection").style.display = "none";
+                document.getElementById("successMsg").style.display = "block";
+                idInput.value = ""; // Box khali kar do
+                
+                // 3 second baad wapas check karo (Agar Form ON hai toh box wapas lao)
+                setTimeout(() => {
+                    document.getElementById("successMsg").style.display = "none";
+                    if (currentStatus === "ON") {
+                        document.getElementById("formSection").style.display = "block";
+                    } else {
+                        document.getElementById("closedMsg").style.display = "block";
+                    }
+                }, 3000);
+            } else {
+                alert("❌ Error saving ID! Server busy ya connection issue.");
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
