@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WePlay 30K Charms Drop</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0c29; background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            user-select: none;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2); text-align: center; width: 90%; max-width: 400px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        /* Secret Button (Heading) Cursor Style */
+        h1 { color: #00e5ff; margin-bottom: 10px; text-transform: uppercase; font-size: 24px; cursor: pointer; }
+        
+        p { color: #cccccc; margin-bottom: 25px; font-size: 14px;}
+        input {
+            width: 90%; padding: 12px; margin-bottom: 20px; border: none; border-radius: 8px;
+            background: rgba(0,0,0,0.5); color: #00e5ff; font-size: 16px; outline: none;
+            border: 1px solid #00e5ff; text-align: center;
+        }
+        input::placeholder { color: rgba(0, 229, 255, 0.5); }
+        .btn-submit {
+            width: 100%; padding: 12px; background: linear-gradient(to right, #00c6ff, #0072ff);
+            border: none; border-radius: 8px; color: white; font-size: 18px; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+        }
+        .btn-submit:hover { box-shadow: 0 0 15px #00c6ff; transform: scale(1.05); }
+        #formSection { display: none; } 
+        .closed-msg { color: #ff4b4b; font-weight: bold; display: block; font-size: 18px; margin-top: 10px; }
+        .success-msg { color: #00ff88; font-weight: bold; display: none; margin-top: 15px; font-size: 18px; }
+
+        /* SECRET ADMIN PANEL STYLES */
+        .card { background: #161624; padding: 30px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.6); width: 90%; max-width: 450px; text-align: center; border: 1px solid #333; display: none; }
+        h2 { color: #00e5ff; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1px; }
+        .btn-green { background: #00b300; color: white; padding: 12px 15px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-red { background: #ff3333; color: white; padding: 12px 15px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-blue { background: #007bff; color: white; padding: 14px 15px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; font-weight: bold; font-size: 15px; width: 95%; transition: 0.2s; }
+        .list-section { margin-top: 25px; text-align: left; }
+        .list-section h3 { color: #00e5ff; margin-bottom: 10px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .refresh-small { background: #222; color: #00ff88; border: 1px solid #00ff88; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .list-box { background: #0f0f1a; padding: 15px; border-radius: 8px; height: 220px; overflow-y: scroll; font-family: 'Courier New', Courier, monospace; border: 1px solid #00e5ff; color: #00ff88; font-size: 16px; line-height: 1.6; }
+        .btn-delete { background: #ff1a1a; color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; font-size: 16px; font-weight: bold; text-transform: uppercase; box-shadow: 0 0 10px rgba(255,26,26,0.3); transition: 0.3s; }
+        #timer { font-size: 20px; font-weight: bold; color: #ff9800; margin-top: 15px; height: 30px; }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== FRONTEND: USER SECTION ==================== -->
+    <div class="container" id="userSection">
+        <!-- 🔥 SECRET BUTTON IS NOW THE TITLE 🔥 -->
+        <h1 id="secretTitle">🎮 30K CHARMS DROP</h1>
+        <p>Apni WePlay ID jaldi submit karein!</p>
+        
+        <div id="formSection">
+            <input type="text" id="weplayId" placeholder="Enter Your WePlay ID" autocomplete="off">
+            <button class="btn-submit" onclick="submitId()">Submit ID</button>
+        </div>
+        
+        <div id="closedMsg" class="closed-msg">⛔ Form is Currently Closed!</div>
+        <div id="successMsg" class="success-msg">✅ ID Submitted Successfully!</div>
+    </div>
+
+    <!-- ==================== BACKEND: SECRET ADMIN PANEL ==================== -->
+    <div class="card" id="adminSection">
+        <h2>⚙️ WePlay Admin Control</h2>
+        
+        <button class="btn-green" onclick="turnOn()">Form ON 🟢</button>
+        <button class="btn-red" onclick="turnOff()">Form OFF 🔴</button>
+        <br>
+        <button class="btn-blue" onclick="startOneMinuteTimer()">⏱️ Start 1-Minute Drop Timer</button>
+
+        <div id="timer">Status: Checking Database...</div>
+
+        <hr style="border: 1px solid #333; margin: 20px 0;">
+
+        <div class="list-section">
+            <h3>
+                <span>📋 Submitted WePlay IDs:</span>
+                <button class="refresh-small" onclick="loadIds()">🔄 Refresh</button>
+            </h3>
+            <div class="list-box" id="idList">IDs dekhne ke liye Refresh karein...</div>
+        </div>
+
+        <button class="btn-delete" onclick="deleteAllData()">🗑️ Clear Database</button>
+    </div>
+
+    <!-- ==================== CORE JAVASCRIPT LOGIC ==================== -->
+    <script>
+        const supabaseUrl = 'https://ioktunemobmqvtwxusqd.supabase.co';
+        const supabaseKey = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlva3R1bmVtb2JtcXZ0d3h1c3FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyOTY4MjIsImV4cCI6MjA5NTg3MjgyMn0.Wj64zcBwyhfNRpbjey9OKzH3p1fl1-Uq5xgtdANZ0_U';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentStatus = "OFF";
+        let isAdminView = false;
+
+        // 🔥 SECRET 7-TAP GESTURE DETECTOR ON TITLE 🔥
+        let tapCount = 0;
+        let tapTimeout;
+        const secretTitleBtn = document.getElementById("secretTitle");
+
+        secretTitleBtn.addEventListener('click', () => {
+            if (isAdminView) return; 
+            
+            tapCount++;
+            clearTimeout(tapTimeout);
+            
+            if (tapCount === 7) {
+                tapCount = 0;
+                let password = prompt("🔑 Secret Access: Enter Admin Password:");
+                if (password === "KRISHNA") {
+                    isAdminView = true;
+                    document.getElementById("userSection").style.display = "none";
+                    document.getElementById("adminSection").style.display = "block";
+                    document.body.style.background = "#1a1a2e"; 
+                    checkStatus();
+                    loadIds();
+                } else if (password !== null) {
+                    alert("❌ Wrong Password! Access Denied.");
+                }
+            }
+            
+            // Agar tap beech mein ruk gaya toh 3 seconds baad counter reset ho jayega
+            tapTimeout = setTimeout(() => { tapCount = 0; }, 3000);
+        });
+
+        // ================= FRONTEND LOGIC =================
+        setInterval(async () => {
+            if (isAdminView) return; 
+            
+            try {
+                const { data } = await supabase.from('config').select('status').eq('id', 1).single();
+                if (data) {
+                    currentStatus = data.status;
+                    if (document.getElementById("successMsg").style.display !== "block") {
+                        if (currentStatus === "ON") {
+                            document.getElementById("formSection").style.display = "block";
+                            document.getElementById("closedMsg").style.display = "none";
+                        } else {
+                            document.getElementById("formSection").style.display = "none";
+                            document.getElementById("closedMsg").style.display = "block";
+                        }
+                    }
+                }
+            } catch (err) { }
+        }, 2000);
+
+        async function submitId() {
+            let idInput = document.getElementById("weplayId");
+            let id = idInput.value.trim();
+            if(id === "") { alert("⚠️ Please enter ID first!"); return; }
+            
+            const { error } = await supabase.from('weplay_ids').insert([{ weplay_id: id }]);
+            if(!error) {
+                document.getElementById("formSection").style.display = "none";
+                document.getElementById("successMsg").style.display = "block";
+                idInput.value = "";
+                
+                setTimeout(() => {
+                    document.getElementById("successMsg").style.display = "none";
+                    if (currentStatus === "ON") {
+                        document.getElementById("formSection").style.display = "block";
+                    } else {
+                        document.getElementById("closedMsg").style.display = "block";
+                    }
+                }, 3000);
+            } else {
+                alert("❌ Error saving ID!");
+            }
+        }
+
+        // ================= ADMIN PANELS FUNCTIONS =================
+        async function checkStatus() {
+            const { data } = await supabase.from('config').select('status').eq('id', 1).single();
+            if(data) {
+                document.getElementById("timer").innerHTML = "Current Status: " + (data.status === "ON" ? "ON 🟢" : "OFF 🔴");
+            }
+        }
+
+        async function turnOn() {
+            await supabase.from('config').update({ status: 'ON' }).eq('id', 1);
+            document.getElementById("timer").innerHTML = "Current Status: ON 🟢";
+        }
+
+        async function turnOff() {
+            await supabase.from('config').update({ status: 'OFF' }).eq('id', 1);
+            document.getElementById("timer").innerHTML = "Current Status: OFF 🔴";
+            loadIds(); 
+        }
+
+        async function startOneMinuteTimer() {
+            turnOn();
+            document.getElementById("idList").innerHTML = "Collecting live IDs... Please wait...";
+            let timeLeft = 60;
+            
+            let countdown = setInterval(() => {
+                document.getElementById("timer").innerHTML = "⏳ Drop Ends In: " + timeLeft + "s";
+                timeLeft--;
+                
+                if (timeLeft < 0) {
+                    clearInterval(countdown);
+                    turnOff();
+                }
+            }, 1000);
+        }
+
+        async function loadIds() {
+            const { data } = await supabase.from('weplay_ids').select('weplay_id');
+            if (data && data.length > 0) {
+                let idsHTML = data.map(row => row.weplay_id).join("<br>");
+                document.getElementById("idList").innerHTML = idsHTML;
+            } else {
+                document.getElementById("idList").innerHTML = "No IDs found in database.";
+            }
+        }
+
+        async function deleteAllData() {
+            let confirmDelete = confirm("⚠️ Kya aap sach mein saari IDs delete karna chahte hain?");
+            if(confirmDelete) {
+                const { error } = await supabase.from('weplay_ids').delete().neq('weplay_id', '');
+                if(!error) {
+                    alert("✅ Admin Panel: Saara data clear ho gaya!");
+                    document.getElementById("idList").innerHTML = "No IDs found in database.";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
